@@ -1,3 +1,10 @@
 # NEAT Algorithm Applied To Financial Markets
 
 In this repository is the code of the [NEAT algorithm](https://neat-python.readthedocs.io/en/latest/neat_overview.html) customed to act in a [financial market simmulation environnment](https://github.com/noegabriel/Financial-Market-Simmulation-Environnment) in Python.
+
+### Structure of the inputs
+
+```Python
+inputs = [(YY-MM-DD, input1, input2, input3, ...)]
+```
+The date will not be send into the neural network, but will be use to send market orders in the simmulation environment.
