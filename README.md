@@ -20,7 +20,18 @@ end_date = str(datetime.date.today())
 
 ### Inputs
 
-For the inputs, we will use 4 indicators : a volume indicator (RVOL), a volatility indicator (VIX), a momentum indicator (RSI), a trend indicator (MACD) with 2 lines which are a 12 and a 26 relative exponential moving average.
+For the inputs, we will use 4 technical indicators : 
+- volume indicator (RVOL)
+- volatility indicator (VIX)
+- momentum indicator (RSI)
+- trend indicator (MACD) represents 2 inputs
+
+And 3 macroeconomic indicators :
+- Sticky Price Consumer Price Index (STICKCPIM157SFRBATL)
+- AAA bonds yield (DAAA)
+- unemployement rate (UNRATE)
+
+In total we have 8 inputs for our NEAT algorithm that we normalize between 0 and 1.
 
 ```Python
 # Function
