@@ -38,13 +38,13 @@ In total we have 8 inputs for our NEAT algorithm that we normalize between 0 and
 inputs = quotesDownloader(symbol, start_date, end_date)
 
 # Strucutre of the inputs
-inputs = [[RVOL	 VIX	 RSI	MACD12	 MACD26]
-          [RVOL	 VIX	 RSI	MACD12	 MACD26]
-          [RVOL	 VIX	 RSI	MACD12	 MACD26]
+inputs = [[RVOL  VIX  RSI  MACD12  MACD26  CPI  DAAA  UNRATE]
+          [RVOL  VIX  RSI  MACD12  MACD26  CPI  DAAA  UNRATE]
+          [RVOL  VIX  RSI  MACD12  MACD26  CPI  DAAA  UNRATE]
           ...
-          [RVOL	 VIX	 RSI	MACD12	 MACD26]
-          [RVOL	 VIX	 RSI	MACD12	 MACD26]
-          [RVOL	 VIX	 RSI	MACD12	 MACD26]]
+          [RVOL  VIX  RSI  MACD12  MACD26  CPI  DAAA  UNRATE]
+          [RVOL  VIX  RSI  MACD12  MACD26  CPI  DAAA  UNRATE]
+          [RVOL  VIX  RSI  MACD12  MACD26  CPI  DAAA  UNRATE]]
 ```
 
 ### Function to evaluate each genome (player)
