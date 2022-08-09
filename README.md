@@ -20,18 +20,20 @@ end_date = str(datetime.date.today())
 
 ### Inputs
 
+For the inputs, we will use 4 indicators : a volume indicator (RVOL), a volatility indicator (VIX), a momentum indicator (RSI), a trend indicator (MACD) with 2 lines which are a 12 and a 26 relative exponential moving average.
+
 ```Python
 # Function
 inputs = quotesDownloader(symbol, start_date, end_date)
 
 # Strucutre of the inputs
-inputs = [[Open	 High	 Low	Close	 AdjClose	 Volume]
-          [Open	 High	 Low	Close	 AdjClose	 Volume]
-          [Open	 High	 Low	Close	 AdjClose	 Volume]
+inputs = [[RVOL	 VIX	 RSI	MACD12	 MACD26]
+          [RVOL	 VIX	 RSI	MACD12	 MACD26]
+          [RVOL	 VIX	 RSI	MACD12	 MACD26]
           ...
-          [Open	 High	 Low	Close	 AdjClose	 Volume]
-          [Open	 High	 Low	Close	 AdjClose	 Volume]
-          [Open	 High	 Low	Close	 AdjClose	 Volume]]
+          [RVOL	 VIX	 RSI	MACD12	 MACD26]
+          [RVOL	 VIX	 RSI	MACD12	 MACD26]
+          [RVOL	 VIX	 RSI	MACD12	 MACD26]]
 ```
 
 ### Function to evaluate each genome (player)
