@@ -6,7 +6,7 @@ In this repository is the code of the [NEAT algorithm](https://neat-python.readt
 ```Python
 from genericpath import exists
 from EnvironmentFunctions import *
-import neat, datetime, pickle, os
+import neat, datetime, pickle, os, stockstats
 ```
 
 ### Parameters
@@ -25,6 +25,8 @@ For the inputs, we will use 4 technical indicators :
 - volatility indicator (VIX)
 - momentum indicator (RSI)
 - trend indicator (MACD) represents 2 inputs
+
+To get these values we use the librairie called [stockstats](https://pypi.org/project/stockstats/).
 
 And 3 macroeconomic indicators :
 - Sticky Price Consumer Price Index (STICKCPIM157SFRBATL)
