@@ -35,8 +35,9 @@ U.S. macroeconomic indicators :
 - USD Currency Index (DXY)
 - Volatility Index (VIX)
 
+### Function to get the inputs
+
 ```Python
-# Function
 def quotesDownloader(symbol, start, end):
   
   fred = pdr.DataReader(['GDP', 'UNRATE', 'DFF', 'CORESTICKM159SFRBATL', 'VIXCLS'], 'fred', start, end).fillna(method='ffill').dropna()
