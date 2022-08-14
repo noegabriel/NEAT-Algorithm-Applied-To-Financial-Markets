@@ -22,31 +22,40 @@ end_date = str(datetime.date.today())
 
 For the inputs, we will use :
 
-4 technical indicators : 
-- volume indicator (RVOL)
-- volatility indicator (VIX)
-- momentum indicator (RSI)
-- trend indicator (MACD) represents 2 inputs
+Technical indicators on the S&P500 : 
+- Money Flow Index (MFI)
+- Relative Strength Index (RSI)
+- Moving Average Convergence Divergence (MACD)
+- Average True Range (ATR)
 
-5 U.S. macroeconomic indicators :
-- Consumer Price Index
-- Federal Funds Effective Rate
-- USD Currency Index
-- Gross Domestic Product Growth Rate
-- Unemployment Rate
+U.S. macroeconomic indicators :
+- Consumer Price Index (CPI)
+- Federal Funds Effective Rate (DFF)
+- Unemployment Rate (UNRATE)
+- USD Currency Index (DXY)
+- Volatility Index (VIX)
 
 ```Python
 # Function
-inputs = quotesDownloader(symbol, start_date, end_date)
+def quotesDownloader(symbol, start, end):
+  
+  fred = pdr.DataReader(['GDP', 'UNRATE', 'DFF', 'CORESTICKM159SFRBATL', 'VIXCLS'], 'fred', start, end).fillna(method='ffill').dropna()
+  dxy = pdr.DataReader('DX-Y.NYB', 'yahoo', start, end).fillna(method='ffill').dropna()
+  spy = StockDataFrame.retype(pdr.DataReader('spy', 'yahoo', start, end).fillna(method='ffill').dropna())
 
-# Strucutre of the inputs
-inputs = [[RVOL  VIX  RSI  MACD12  MACD26  CPI  DAAA  UNRATE]
-          [RVOL  VIX  RSI  MACD12  MACD26  CPI  DAAA  UNRATE]
-          [RVOL  VIX  RSI  MACD12  MACD26  CPI  DAAA  UNRATE]
-          ...
-          [RVOL  VIX  RSI  MACD12  MACD26  CPI  DAAA  UNRATE]
-          [RVOL  VIX  RSI  MACD12  MACD26  CPI  DAAA  UNRATE]
-          [RVOL  VIX  RSI  MACD12  MACD26  CPI  DAAA  UNRATE]]
+  cpi = pd.DataFrame(fred.iloc[:,3]).rename(columns={'CORESTICKM159SFRBATL': 'CPI'}) # Consumer Price Index
+  dff = pd.DataFrame(fred.iloc[:,2]) # Federal Funds Effective Rate
+  dxy = pd.DataFrame(dxy.iloc[:,3]).rename_axis('DATE').rename(columns={'Close': 'DXY'}) # USD Currency Index
+  unr = pd.DataFrame(fred.iloc[:,1]) # Unemployment Rate
+  vix = pd.DataFrame(fred.iloc[:,4]).rename(columns={'VIXCLS': 'VIX'}) # Volatility Index
+
+  macroData = cpi.merge(dff, on='DATE').merge(unr, on='DATE').merge(dxy, on='DATE').merge(vix, on='DATE')
+  technicalData = spy[['mfi', 'rsi', 'macd', 'atr_20']].fillna(method='ffill').dropna().rename_axis('DATE').rename(columns={'mfi': 'MFI', 'rsi': 'RSI', 'macd': 'MACD', 'atr_20': 'ATR'})
+  
+  inputs = preprocessing.MinMaxScaler().fit_transform(technicalData.values)
+  
+  return technicalData.merge(macroData, on='DATE')
+
 ```
 
 ### Function to evaluate each genome (player)
