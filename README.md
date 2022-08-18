@@ -8,16 +8,16 @@ In this repository is the code of the [NEAT algorithm](https://neat-python.readt
 ```Python
 from genericpath import exists
 from EnvironmentFunctions import *
-import neat, datetime, pickle, os, stockstats
+import neat, pickle, os
 ```
 
 ### Parameters
 ```Python
-symbol = "SPY"
-generations = 10
-quantity = 1
-start_date = '1993-01-29'
-end_date = str(datetime.date.today())
+quantity = 10
+generations = 100
+symbol = 'BK'
+start_date = '2000-01-01'
+end_date = '2015-01-01'
 ```
 
 ### Inputs
@@ -36,6 +36,11 @@ U.S. macroeconomic indicators :
 - Unemployment Rate (UNRATE)
 - USD Currency Index (DXY)
 - Volatility Index (VIX)
+
+Call the function :
+```Python
+inputs = quotesDownloader(symbol, start_date, end_date)
+```
 
 ### Function to get the inputs
 
@@ -64,56 +69,57 @@ def quotesDownloader(symbol, start, end):
 ### Function to evaluate each genome (player)
 
 ```Python
+# Evaluate each genome (player)
 def eval_genomes(genomes, config):
-
-    for genome_id, genome in genomes:
     
-        print('------ NEXT PLAYER ------ ')
+    for genome_id, genome in genomes:
+        print('---------------- Genome Id ', str(genome_id), ' ----------------')
         
         # Create the player in the environment
         player = createPlayer()
 
-        # Initialize the fitness value (the score represents the profit made)
-        genome.fitness = 0
+        # Initialize the fitness value (profit and loss)
+        genome.fitness = player.totalValue - 1000
 
         # Create a random neural network according to the previous genomes and the config file
         net = neat.nn.FeedForwardNetwork.create(genome, config)
-        index = 0
 
         # Passing into each state
-        while(index < len(inputs)):
-        
-            data = inputs[index]
-            
+        index = 0
+        while(index < len(inputs[1])):
+            data = inputs[1][index]
+
             # Use the neural network with each inputs
             output = net.activate(data)
-            print(output)
 
-            # Take an action in the environment according to the output
-            if output[0] < 0.4:
+            if output[0] < 0.1:
                 if placeAnOrder(symbol, inputs, index, player, quantity, 'sell') == True:
-                    print('sell order filled')
+                    print('Inputs      : ', str(data))
+                    print('Output      : ', str(output))
+                    
+                    print('sell order filled (', str(quantity), ' * ', str(symbol), ' @ ', str(inputs[0][index][3]), ' $')
+                    print('Total value : ', str(player.totalValue))
+                    x = 1
 
-            if output[0] > 0.6:
+            if output[0] > 0.9:
                 if placeAnOrder(symbol, inputs, index, player, quantity, 'buy') == True:
-                    print('buy  order filled')
+                    print('Inputs      : ', str(data))
+                    print('Output      : ', str(output))
+                    
+                    print('buy order filled (', str(quantity), ' * ', str(symbol), ' @ ', str(inputs[0][index][3]), ' $')
+                    print('Total value : ', str(player.totalValue))
+                    x = 1
 
-            if output[0] <= 0.6 and output[0] >= 0.4:
-                if placeAnOrder(symbol, inputs, index, player, quantity, 'hold') == True:
-                    print('hold order filled')
-            index = index + 1
+            index += 1
 
-            player.totalValue = player.balance + player.portfolioValue
-            if player.totalValue > 1000:
-                print(player.totalValue)
-
-        # Give the fitness value (score) to the genome (player)
+        # Give the fitness value (profit and loss) to the genome (player)
         genome.fitness = player.totalValue - 1000
 ```
 
 ### Run function
 
 ```Python
+# This is the main function of the algorithm
 def run(config_file):
 
     # Load configuration.
@@ -140,35 +146,39 @@ def run(config_file):
     index = 0
     player = createPlayer()
 
-    pickle.dump(winner_net, open('winner.pkl', 'wb'))
+    # Save the winner.
+    with open('winner-feedforward', 'wb') as f:
+        pickle.dump(winner, f)
 
-    # Passing into each state (xi = xor_inputs = "the list of each states with their inputs")
-    while(index < len(inputs)):
-        data = inputs[index]
+    # Passing into each state
+    while(index < len(inputs[1])):
+        data = inputs[1][index]
+
         # Use the neural network with each inputs
         output = winner_net.activate(data)
-
-        if output[0] < 0.4:
+        if output[0] < 0.1:
             if placeAnOrder(symbol, inputs, index, player, quantity, 'sell') == True:
-                print('sell order filled')
+                print('Inputs      : ', str(data))
+                print('Output      : ', str(output))
+                
+                print('sell order filled (', str(quantity), ' * ', str(symbol), ' @ ', str(inputs[0][index][3]), ' $')
+                print('total value : ', str(player.totalValue))
+                x = 1
 
-        if output[0] > 0.6:
+        if output[0] > 0.9:
             if placeAnOrder(symbol, inputs, index, player, quantity, 'buy') == True:
-                print('buy  order filled')
+                print('Inputs      : ', str(data))
+                print('Output      : ', str(output))
+                
+                print('buy order filled (', str(quantity), ' * ', str(symbol), ' @ ', str(inputs[0][index][3]), ' $')
+                print('total value : ', str(player.totalValue))
+                x = 1
 
-        if output[0] <= 0.6 and output[0] >= 0.4:
-            if placeAnOrder(symbol, inputs, index, player, quantity, 'hold') == True:
-                print('hold order filled')
-
-        index = index + 1
-        player.totalValue = player.balance + player.portfolioValue
-        if player.totalValue > 1000:
-            print(player.totalValue)
+        index += 1
 
     if exists('neat-checkpoint-4'):
         p = neat.Checkpointer.restore_checkpoint('neat-checkpoint-4')
-    p.run(eval_genomes, generations)
-```
+    p.run(eval_genomes, generations)```
 
 ### Code to make the algorithm working
 
