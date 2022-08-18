@@ -182,7 +182,8 @@ def run(config_file):
 
     if exists('neat-checkpoint-4'):
         p = neat.Checkpointer.restore_checkpoint('neat-checkpoint-4')
-    p.run(eval_genomes, generations)```
+    p.run(eval_genomes, generations)
+```
 
 ### Code to make the algorithm working
 
