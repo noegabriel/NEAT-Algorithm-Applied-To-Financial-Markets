@@ -4,6 +4,10 @@
 
 In this repository is the code of the [NEAT algorithm](https://neat-python.readthedocs.io/en/latest/neat_overview.html) customed to act in a [financial market simmulation environnment](https://github.com/noegabriel/Financial-Market-Simmulation-Environnment) in Python.
 
+### Deep Reinforcement Learning
+
+![image](https://user-images.githubusercontent.com/84172514/185416631-ecb297b4-36f3-4837-b0ac-2c09a968bf89.png)
+
 ### Librairies
 ```Python
 from genericpath import exists
