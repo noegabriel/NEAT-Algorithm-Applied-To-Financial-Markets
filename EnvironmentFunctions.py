@@ -4,21 +4,16 @@
 from sqlite3 import Timestamp
 from sklearn import preprocessing
 from stockstats import StockDataFrame
-from pandas_datareader import wb
-
-import pandas_datareader as web
 import pandas_datareader as pdr
-import datetime as dt
 import pandas as pd
-import numpy as np
 
 def createPlayer():
   class Player:
     pass
   player = Player()
   player.balance = 1000
-  player.totalValue = player.balance
   player.portfolioAssets = []
+  player.pnl = 0
   return player
 
 def quotesDownloader(symbol, start, end):
@@ -47,7 +42,6 @@ def quotesDownloader(symbol, start, end):
 
 def placeAnOrder(symbol, quotes, index, player, quantity, operation):
   price = quotes[0][index][3]
-
   # Buy operation
   if operation == 'buy':
     # Calculate the cost and define the fees
@@ -93,9 +87,8 @@ def placeAnOrder(symbol, quotes, index, player, quantity, operation):
   # Check if there is assets in the portfolio
   if player.portfolioAssets == []:
     # If the portfolio is empty of assets, the value of the portfdolio will be the same as the balance amount
-    player.totalValue = player.balance
+    player.pnl = player.balance - 1000
   else:
     # If there is assets in the portfolio, the value of the portfolio will be equal to the balance and the quantity of the assets multiplied by it's price
-    player.totalValue = player.balance + (player.portfolioAssets[0][1] * price)
-
+    player.pnl = player.balance + (player.portfolioAssets[0][1] * price) - 1000
   return True
