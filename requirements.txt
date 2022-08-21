@@ -1,0 +1,11 @@
+sqlite3
+sklearn
+stockstats
+pandas_datareader
+datetime
+pandas
+numpy
+genericpath
+neat
+pickle
+os
