@@ -1,6 +1,6 @@
 # NEAT Algorithm Applied To Financial Markets
 
-© Noé Gabriel 2022 All Rights Reserved
+© [Noé Gabriel](https://www.linkedin.com/in/no%C3%A9-gabriel-b8337820b/) 2022 All Rights Reserved
 
 In this repository is the code of the [NEAT algorithm](https://neat-python.readthedocs.io/en/latest/neat_overview.html) customed to act in a [financial market simmulation environnment](https://github.com/noegabriel/Financial-Market-Simmulation-Environnment) in Python.
 
@@ -194,7 +194,7 @@ run(config_path)
 
 # Financial Market Simmulation Environnment
 
-© Noé Gabriel 2022 All Rights Reserved
+© [Noé Gabriel](https://www.linkedin.com/in/no%C3%A9-gabriel-b8337820b/) 2022 All Rights Reserved
 
 In this repository is the code for a financial market simulation environment to be used for a deep reinforcement learning algorithm in Python.
 
