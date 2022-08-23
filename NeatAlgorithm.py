@@ -1,3 +1,6 @@
+# © Noé Gabriel 2022 All Rights Reserved
+# This file contains all the functions to be call with an external app to interact with the market environment
+
 from genericpath import exists
 from pyclbr import Function
 from EnvironmentFunctions import *
