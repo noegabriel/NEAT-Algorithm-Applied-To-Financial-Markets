@@ -14,6 +14,8 @@ def createPlayer():
   player.balance = 1000
   player.portfolioAssets = []
   player.pnl = 0
+  player.pnlEvolution= []
+  player.portfolioEvolution = [] 
   return player
 
 def quotesDownloader(symbol, start, end):
@@ -38,7 +40,7 @@ def quotesDownloader(symbol, start, end):
   # Normalize data
   inputs = preprocessing.MinMaxScaler().fit_transform(data.values.tolist()).tolist()
   
-  return [asset.values.tolist(), inputs]
+  return [asset.values.tolist(), inputs, asset.index.tolist()]
 
 def placeAnOrder(symbol, quotes, index, player, quantity, operation):
   price = quotes[0][index][3]
@@ -91,4 +93,5 @@ def placeAnOrder(symbol, quotes, index, player, quantity, operation):
   else:
     # If there is assets in the portfolio, the value of the portfolio will be equal to the balance and the quantity of the assets multiplied by it's price
     player.pnl = player.balance + (player.portfolioAssets[0][1] * price) - 1000
+
   return True
