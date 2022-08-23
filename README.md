@@ -8,13 +8,6 @@ In this repository is the code of the [NEAT algorithm](https://neat-python.readt
 
 ![image](https://user-images.githubusercontent.com/84172514/185416631-ecb297b4-36f3-4837-b0ac-2c09a968bf89.png)
 
-### Librairies
-```Python
-from genericpath import exists
-from EnvironmentFunctions import *
-import neat, pickle, os
-```
-
 ### Parameters
 ```Python
 quantity = 10
@@ -25,8 +18,6 @@ end_date = '2015-01-01'
 ```
 
 ### Inputs
-
-For the inputs, we will use :
 
 Technical indicators on the S&P500 : 
 - Money Flow Index (MFI)
@@ -51,23 +42,27 @@ inputs = quotesDownloader(symbol, start_date, end_date)
 ```Python
 def quotesDownloader(symbol, start, end):
   
+  # Request data
   fred = pdr.DataReader(['GDP', 'UNRATE', 'DFF', 'CORESTICKM159SFRBATL', 'VIXCLS'], 'fred', start, end).fillna(method='ffill').dropna()
   dxy = pdr.DataReader('DX-Y.NYB', 'yahoo', start, end).fillna(method='ffill').dropna()
-  spy = StockDataFrame.retype(pdr.DataReader('spy', 'yahoo', start, end).fillna(method='ffill').dropna())
+  asset = pdr.DataReader(symbol, 'yahoo', start, end).fillna(method='ffill').dropna()
 
+  # Format data
   cpi = pd.DataFrame(fred.iloc[:,3]).rename(columns={'CORESTICKM159SFRBATL': 'CPI'}) # Consumer Price Index
   dff = pd.DataFrame(fred.iloc[:,2]) # Federal Funds Effective Rate
   dxy = pd.DataFrame(dxy.iloc[:,3]).rename_axis('DATE').rename(columns={'Close': 'DXY'}) # USD Currency Index
   unr = pd.DataFrame(fred.iloc[:,1]) # Unemployment Rate
   vix = pd.DataFrame(fred.iloc[:,4]).rename(columns={'VIXCLS': 'VIX'}) # Volatility Index
 
+  # Merge data
   macroData = cpi.merge(dff, on='DATE').merge(unr, on='DATE').merge(dxy, on='DATE').merge(vix, on='DATE')
-  technicalData = spy[['mfi', 'rsi', 'macd', 'atr_20']].fillna(method='ffill').dropna().rename_axis('DATE').rename(columns={'mfi': 'MFI', 'rsi': 'RSI', 'macd': 'MACD', 'atr_20': 'ATR'})
-  
-  inputs = preprocessing.MinMaxScaler().fit_transform(technicalData.values)
-  
-  return technicalData.merge(macroData, on='DATE')
+  technicalData = StockDataFrame.retype(asset)[['mfi', 'rsi', 'macd', 'atr_20']].fillna(method='ffill').dropna().rename_axis('DATE').rename(columns={'mfi': 'MFI', 'rsi': 'RSI', 'macd': 'MACD', 'atr_20': 'ATR'})
+  data = technicalData.merge(macroData, on='DATE')
 
+  # Normalize data
+  inputs = preprocessing.MinMaxScaler().fit_transform(data.values.tolist()).tolist()
+  
+  return [asset.values.tolist(), inputs, asset.index.tolist()]
 ```
 
 ### Function to evaluate each genome (player)
@@ -75,49 +70,42 @@ def quotesDownloader(symbol, start, end):
 ```Python
 # Evaluate each genome (player)
 def eval_genomes(genomes, config):
-    
+
     for genome_id, genome in genomes:
-        print('---------------- Genome Id ', str(genome_id), ' ----------------')
+
+        print('Genome Id : ', str(genome_id))
         
         # Create the player in the environment
         player = createPlayer()
-
+        
         # Initialize the fitness value (profit and loss)
-        genome.fitness = player.totalValue - 1000
-
+        genome.fitness = player.pnl
+        
         # Create a random neural network according to the previous genomes and the config file
         net = neat.nn.FeedForwardNetwork.create(genome, config)
-
+        
         # Passing into each state
         index = 0
         while(index < len(inputs[1])):
             data = inputs[1][index]
-
             # Use the neural network with each inputs
             output = net.activate(data)
-
             if output[0] < 0.1:
                 if placeAnOrder(symbol, inputs, index, player, quantity, 'sell') == True:
-                    print('Inputs      : ', str(data))
-                    print('Output      : ', str(output))
-                    
+                    print('inputs      : ', str(data))
+                    print('output      : ', str(output))     
                     print('sell order filled (', str(quantity), ' * ', str(symbol), ' @ ', str(inputs[0][index][3]), ' $')
-                    print('Total value : ', str(player.totalValue))
-                    x = 1
-
+                    print('PnL : ', str(player.pnl))
             if output[0] > 0.9:
                 if placeAnOrder(symbol, inputs, index, player, quantity, 'buy') == True:
-                    print('Inputs      : ', str(data))
-                    print('Output      : ', str(output))
-                    
+                    print('inputs      : ', str(data))
+                    print('output      : ', str(output))       
                     print('buy order filled (', str(quantity), ' * ', str(symbol), ' @ ', str(inputs[0][index][3]), ' $')
-                    print('Total value : ', str(player.totalValue))
-                    x = 1
-
+                    print('PnL : ', str(player.pnl)) 
             index += 1
-
+        
         # Give the fitness value (profit and loss) to the genome (player)
-        genome.fitness = player.totalValue - 1000
+        genome.fitness = player.pnl
 ```
 
 ### Run function
@@ -125,7 +113,6 @@ def eval_genomes(genomes, config):
 ```Python
 # This is the main function of the algorithm
 def run(config_file):
-
     # Load configuration.
     config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
                          neat.DefaultSpeciesSet, neat.DefaultStagnation,
@@ -139,8 +126,7 @@ def run(config_file):
     stats = neat.StatisticsReporter()
     p.add_reporter(stats)
     p.add_reporter(neat.Checkpointer(4))
-
-    winner = p.run(eval_genomes, generations)
+    winner = p.run(eval_genomes, 10)
 
     # Display the winning genome.
     print('Best genome:\n{!s}'.format(winner))
@@ -151,38 +137,42 @@ def run(config_file):
     player = createPlayer()
 
     # Save the winner.
-    with open('winner-feedforward', 'wb') as f:
+    with open('winner.pickle', 'wb') as f:
         pickle.dump(winner, f)
 
     # Passing into each state
     while(index < len(inputs[1])):
         data = inputs[1][index]
-
+    
         # Use the neural network with each inputs
         output = winner_net.activate(data)
         if output[0] < 0.1:
             if placeAnOrder(symbol, inputs, index, player, quantity, 'sell') == True:
-                print('Inputs      : ', str(data))
-                print('Output      : ', str(output))
-                
+                print('inputs      : ', str(data))
+                print('output      : ', str(output))
                 print('sell order filled (', str(quantity), ' * ', str(symbol), ' @ ', str(inputs[0][index][3]), ' $')
-                print('total value : ', str(player.totalValue))
-                x = 1
-
+                print('PnL : ', str(player.pnl))
         if output[0] > 0.9:
             if placeAnOrder(symbol, inputs, index, player, quantity, 'buy') == True:
-                print('Inputs      : ', str(data))
-                print('Output      : ', str(output))
-                
+                print('inputs      : ', str(data))
+                print('output      : ', str(output))
                 print('buy order filled (', str(quantity), ' * ', str(symbol), ' @ ', str(inputs[0][index][3]), ' $')
-                print('total value : ', str(player.totalValue))
-                x = 1
+                print('PnL : ', str(player.pnl))
+        
+        # Add the state of the pnl to the pnlEvolution variable
+        date = inputs[2][index]
+        player.pnlEvolution.append([date, player.pnl])
 
+        # Add the state of the portfolio to the portfolioEvolution variable
+        portfolioValue = player.pnl + 1000
+        player.portfolioEvolution.append([date, portfolioValue])
+        
+        # Next index
         index += 1
 
     if exists('neat-checkpoint-4'):
         p = neat.Checkpointer.restore_checkpoint('neat-checkpoint-4')
-    p.run(eval_genomes, generations)
+    p.run(eval_genomes, 10)
 ```
 
 ### Code to make the algorithm working
@@ -204,58 +194,24 @@ In this repository is the code for a financial market simulation environment to 
   `createPlayers()`
 - Place market orders for a particular player
   `placeAnOrder(symbol, quotes, date, player, quantity, operation)`
+- Get the inputs
+  `quotesDownloader(symbol, start, end)`
 
 Market operations are `buy` or `sell`
 
 ### Attributes of players
-- `balance` in USD (initiale value : 1000)
-- `totalValue`in USD (the sum of the `balance`and the `portfolioValue`)
-- `assets` is a list of lists that save each assets with the `symbolOfTheAsset` and the `quantity` of shares
-
-Function to create a player :
 ```Python
-def createPlayer():
-  class Player:
-    pass
-  player = Player()
   player.balance = 1000
-  player.totalValue = player.balance
   player.portfolioAssets = []
-  return player
-```
-
-Function to get the inputs :
-```Python
-def quotesDownloader(symbol, start, end):
-  
-  # Request data
-  fred = pdr.DataReader(['GDP', 'UNRATE', 'DFF', 'CORESTICKM159SFRBATL', 'VIXCLS'], 'fred', start, end).fillna(method='ffill').dropna()
-  dxy = pdr.DataReader('DX-Y.NYB', 'yahoo', start, end).fillna(method='ffill').dropna()
-  asset = pdr.DataReader(symbol, 'yahoo', start, end).fillna(method='ffill').dropna()
-
-  # Format data
-  cpi = pd.DataFrame(fred.iloc[:,3]).rename(columns={'CORESTICKM159SFRBATL': 'CPI'}) # Consumer Price Index
-  dff = pd.DataFrame(fred.iloc[:,2]) # Federal Funds Effective Rate
-  dxy = pd.DataFrame(dxy.iloc[:,3]).rename_axis('DATE').rename(columns={'Close': 'DXY'}) # USD Currency Index
-  unr = pd.DataFrame(fred.iloc[:,1]) # Unemployment Rate
-  vix = pd.DataFrame(fred.iloc[:,4]).rename(columns={'VIXCLS': 'VIX'}) # Volatility Index
-
-  # Merge data
-  macroData = cpi.merge(dff, on='DATE').merge(unr, on='DATE').merge(dxy, on='DATE').merge(vix, on='DATE')
-  technicalData = StockDataFrame.retype(asset)[['mfi', 'rsi', 'macd', 'atr_20']].fillna(method='ffill').dropna().rename_axis('DATE').rename(columns={'mfi': 'MFI', 'rsi': 'RSI', 'macd': 'MACD', 'atr_20': 'ATR'})
-  data = technicalData.merge(macroData, on='DATE')
-
-  # Normalize data
-  inputs = preprocessing.MinMaxScaler().fit_transform(data.values.tolist()).tolist()
-  
-  return [asset.values.tolist(), inputs]
+  player.pnl = 0
+  player.pnlEvolution= []
+  player.portfolioEvolution = []
 ```
 
 Function to place an order :
 ```Python
 def placeAnOrder(symbol, quotes, index, player, quantity, operation):
   price = quotes[0][index][3]
-
   # Buy operation
   if operation == 'buy':
     # Calculate the cost and define the fees
@@ -301,10 +257,10 @@ def placeAnOrder(symbol, quotes, index, player, quantity, operation):
   # Check if there is assets in the portfolio
   if player.portfolioAssets == []:
     # If the portfolio is empty of assets, the value of the portfdolio will be the same as the balance amount
-    player.totalValue = player.balance
+    player.pnl = player.balance - 1000
   else:
     # If there is assets in the portfolio, the value of the portfolio will be equal to the balance and the quantity of the assets multiplied by it's price
-    player.totalValue = player.balance + (player.portfolioAssets[0][1] * price)
+    player.pnl = player.balance + (player.portfolioAssets[0][1] * price) - 1000
 
   return True
 ```
